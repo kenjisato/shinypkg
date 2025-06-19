@@ -1,0 +1,49 @@
+# __main__.py
+import argparse
+from pathlib import Path
+import shiny
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run the Shiny app (compatible with shiny run)",
+        add_help=False
+    )
+
+    parser.add_argument(
+        "app", nargs="?", default="app.py",
+        help="Path to the Shiny app file (default: app.py)"
+    )
+    parser.add_argument(
+        "-h", "--host", default="127.0.0.1",
+        help="Bind socket to this host (default: 127.0.0.1)"
+    )
+    parser.add_argument(
+        "-p", "--port", type=int, default=8000,
+        help="Bind socket to this port (default: 8000)"
+    )
+    parser.add_argument(
+        "-b", "--launch-browser", action="store_true",
+        help="Launch app in browser after start"
+    )
+    parser.add_argument(
+        "-r", "--reload", action="store_true",
+        help="Enable auto-reload"
+    )
+    parser.add_argument(
+        "--help", action="help", 
+        help="Show this message and exit."
+    )
+
+    args = parser.parse_args()
+
+    shiny.run_app(
+        app=str(Path(__file__).parent / args.app),
+        host=args.host,
+        port=args.port,
+        launch_browser=args.launch_browser,
+        reload=args.reload,
+    )
+
+if __name__ == "__main__":
+    main()
+
