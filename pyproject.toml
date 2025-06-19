@@ -1,13 +1,13 @@
 [project]
 name = "shinypkg"
-version = "0.1.0"
+version = "0.1.1"
 description = "A small tool to help you distribute a Shiny app"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
     { name = "Kenji Sato", email = "mail@kenjisato.jp" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "jinja2>=3.1.0",
     "rich>=13.0.0",
