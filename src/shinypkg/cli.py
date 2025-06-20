@@ -32,6 +32,13 @@ def create(
     author_email: Annotated[
         str, typer.Option(help="Author email", show_default=False)
     ] = "",
+    no_app: Annotated[
+        bool,
+        typer.Option(
+            "--no-app",
+            help="Do not create app.py or _util.py",
+        )
+    ] = False,
 ):
     """
     Initialize a Shiny app project.
@@ -60,12 +67,16 @@ def create(
     package_path.mkdir(parents=True)
 
     # Step 5: Create files from templates
-    (package_path / "app.py").write_text(
-        render_template("app.py.j2", context), encoding="utf-8"
-    )
-    (package_path / "_util.py").write_text(
-        render_template("_util.py.j2", context), encoding="utf-8"
-    )
+    if no_app:
+        console.print("[yellow]Skipping sample code generation.[/yellow]")
+    else:
+        (package_path / "app.py").write_text(
+            render_template("app.py.j2", context), encoding="utf-8"
+        )
+        (package_path / "_util.py").write_text(
+            render_template("_util.py.j2", context), encoding="utf-8"
+        )
+
     (package_path / "__init__.py").write_text(
         render_template("__init__.py.j2", context), encoding="utf-8"
     )
