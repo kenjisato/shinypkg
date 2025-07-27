@@ -240,7 +240,18 @@ def pack(
     console.print("[green]✔ Packaging complete.[/green]")
     
     # Check if we need to cd into the target directory
-    need_cd = Path.cwd() != target
+    current_dir = Path.cwd()
+    need_cd = current_dir != target
+    
+    # Calculate the path to target directory
+    target_path_str = ""
+    if need_cd:
+        try:
+            # Try to get relative path first (cleaner output)
+            target_path_str = str(target.relative_to(current_dir))
+        except ValueError:
+            # If relative path fails, use absolute path
+            target_path_str = str(target)
     
     # Check for requirements.txt and provide installation instructions
     project_name = source.name
@@ -252,21 +263,21 @@ def pack(
         console.print("To install dependencies, run:")
         
         if need_cd:
-            console.print(f"  [green]cd {target.name}[/green]")
+            console.print(f"  [green]cd {target_path_str}[/green]")
             console.print(f"  [green]uv add -r {relative_path}[/green]")
         else:
             console.print(f"  [green]uv add -r {relative_path}[/green]")
             
         console.print("\nAlternatively:")
         if need_cd:
-            console.print(f"  [dim]cd {target.name} && pip install -r {relative_path}[/dim]")
+            console.print(f"  [dim]cd {target_path_str} && pip install -r {relative_path}[/dim]")
         else:
             console.print(f"  [dim]pip install -r {relative_path}[/dim]")
     else:
         console.print("\n[dim]No requirements.txt found. You may need to manually install dependencies:[/dim]")
         
         if need_cd:
-            console.print(f"  [dim]cd {target.name}[/dim]")
+            console.print(f"  [dim]cd {target_path_str}[/dim]")
             console.print("  [dim]uv add shiny  # or other dependencies[/dim]")
         else:
             console.print("  [dim]uv add shiny  # or other dependencies[/dim]")
