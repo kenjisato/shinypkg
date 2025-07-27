@@ -79,7 +79,7 @@ def pack_app(source: Path, target: Path, inplace: bool = False):
             raise FileExistsError(f"Target directory {target} already exists.")
     else:
         if target != source:
-            raise ValueError("If inplace=False, source and target must differ.")
+            raise ValueError("If inplace=True, source and target must be the same.")
     
     # Use backup and rollback context manager
     with _backup_and_rollback(source, target, inplace):
@@ -99,7 +99,7 @@ def pack_app(source: Path, target: Path, inplace: bool = False):
             if path.is_file() and _is_excluded(path.name):
                 continue
             shutil.move(str(path), str(package_dir / path.name))
-            print(package_dir / path.name)
+            console.log(f"Moved: {package_dir / path.name}")
 
         # context for templates
         git_info = get_git_author_info()

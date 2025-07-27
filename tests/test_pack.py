@@ -1,6 +1,4 @@
-import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import pytest
 
@@ -99,7 +97,7 @@ def test_pack_inplace_validation(tmp_path):
     target = tmp_path / "different"
     create_dummy_app(source, ["app.py"])
     
-    with pytest.raises(ValueError, match="If inplace=False, source and target must differ"):
+    with pytest.raises(ValueError, match="If inplace=True, source and target must be the same."):
         pack_app(source, target, inplace=True)
 
 
