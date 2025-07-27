@@ -240,8 +240,7 @@ def pack(
     console.print("[green]✔ Packaging complete.[/green]")
     
     # Check if we need to cd into the target directory
-    current_dir = Path.cwd()
-    need_cd = current_dir != target
+    need_cd = Path.cwd() != target
     
     # Check for requirements.txt and provide installation instructions
     project_name = source.name

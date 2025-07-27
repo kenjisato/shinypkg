@@ -10,9 +10,11 @@ def create_dummy_app(path: Path, files: list[str]):
     for file in files:
         (path / file).write_text(f"# {file}", encoding="utf-8")
 
-@pytest.mark.parametrize("tree", 
-                         [["app.py", "_util.py"],
-                          ["app-test.py", "foo.py", "README.md"]])
+@pytest.mark.parametrize(
+    "tree", [
+    ["app.py", "_util.py"],
+    ["app-test.py", "foo.py", "README.md"],
+])
 @pytest.mark.parametrize("inplace", [False, True])
 def test_pack_into_new_directory(tmp_path, inplace, tree):
     """
@@ -36,7 +38,6 @@ def test_pack_into_new_directory(tmp_path, inplace, tree):
         else:
             assert (package_dir / item).exists()
             
-
     assert (package_dir / "__main__.py").exists()
     assert (package_dir / "__init__.py").exists()
     assert (target / "pyproject.toml").exists()
