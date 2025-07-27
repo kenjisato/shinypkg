@@ -260,3 +260,96 @@ def test_upgrade_command_nonexistent_file(tmp_path):
         
     finally:
         os.chdir(original_cwd)
+
+
+def test_pack_command_target_outside_current_directory(tmp_path):
+    """Test pack command with target outside current directory shows correct path"""
+    # Create source app in a subdirectory
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    (source_dir / "app.py").write_text("# app.py")
+    (source_dir / "requirements.txt").write_text("flask==2.0.0")
+    
+    # Create a different directory to run the command from
+    work_dir = tmp_path / "work"
+    work_dir.mkdir()
+    
+    # Specify target in yet another location
+    target_dir = tmp_path / "output" / "myapp-packaged"
+    
+    original_cwd = Path.cwd()
+    try:
+        os.chdir(work_dir)
+        
+        result = runner.invoke(app, ["pack", str(source_dir), str(target_dir)])
+        
+        assert result.exit_code == 0
+        assert "Packaging complete" in result.stdout
+        assert "Found requirements.txt" in result.stdout
+        
+        # Should show absolute path since target is not relative to current directory
+        # Check that the target directory path appears in cd command
+        assert "cd " in result.stdout
+        # Check that it's an absolute path (contains parts of the tmp_path)
+        # Remove newlines and spaces to handle formatting
+        stdout_clean = result.stdout.replace('\n', ' ').replace('  ', ' ')
+        assert "output/myapp-packaged" in stdout_clean
+        
+        # Verify the target was created correctly
+        assert target_dir.exists()
+        package_dir = target_dir / "source"
+        assert package_dir.exists()
+        assert (package_dir / "app.py").exists()
+        assert (package_dir / "requirements.txt").exists()
+        
+    finally:
+        os.chdir(original_cwd)
+
+
+def test_pack_command_target_relative_to_current_directory(tmp_path):
+    """Test pack command with target relative to current directory shows relative path"""
+    # Create source app
+    source_dir = tmp_path / "myapp"
+    source_dir.mkdir()
+    (source_dir / "app.py").write_text("# app.py")
+    
+    original_cwd = Path.cwd()
+    try:
+        os.chdir(tmp_path)
+        
+        result = runner.invoke(app, ["pack", "myapp"])
+        
+        assert result.exit_code == 0
+        assert "Packaging complete" in result.stdout
+        
+        # Should show relative path since target is relative to current directory
+        assert "cd myapp-packaged" in result.stdout
+        # Should not show absolute path
+        assert str(tmp_path) not in result.stdout.split("cd ")[1].split("\n")[0]
+        
+    finally:
+        os.chdir(original_cwd)
+
+
+def test_pack_command_inplace_no_cd_needed(tmp_path):
+    """Test pack command with inplace option shows no cd instruction"""
+    # Create source app
+    source_dir = tmp_path / "myapp"
+    source_dir.mkdir()
+    (source_dir / "app.py").write_text("# app.py")
+    
+    original_cwd = Path.cwd()
+    try:
+        os.chdir(source_dir)
+        
+        result = runner.invoke(app, ["pack", ".", "--inplace"])
+        
+        assert result.exit_code == 0
+        assert "Packaging complete" in result.stdout
+        
+        # Should not show any cd instruction since we're already in the target
+        lines_with_cd = [line for line in result.stdout.split('\n') if 'cd ' in line]
+        assert len(lines_with_cd) == 0
+        
+    finally:
+        os.chdir(original_cwd)
