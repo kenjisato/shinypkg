@@ -3,14 +3,14 @@
 import difflib
 import subprocess
 from pathlib import Path
-from typing import Annotated
-
+from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
 
-from shinypkg._git import is_git_repo, get_git_author_info
-from shinypkg._template import render_template
+from ._git import is_git_repo, get_git_author_info
+from ._template import render_template
+from ._pack import pack_app
 
 app = typer.Typer()
 console = Console()
@@ -189,3 +189,91 @@ def upgrade(
         console.print(f"[green]Updated '{filename}' with template version.[/green]")
     else:
         console.print(f"[dim]Skipped overwriting '{filename}'.[/dim]")
+
+
+@app.command()
+def pack(
+    source: Annotated[
+        Path, typer.Argument(help="Directory of existing Shiny app")
+    ],
+    target: Annotated[
+        Optional[Path],
+        typer.Argument(help="Target directory for packaged app", show_default=False)
+    ] = None,
+    inplace: Annotated[
+        bool,
+        typer.Option("--inplace", help="Modify the source directory in-place"),
+    ] = False,
+):
+    """
+    Convert a flat Shiny app project into an installable package.
+    """
+
+    source = source.resolve()
+
+    if not source.exists():
+        console.print("[red]Error:[/red] Source directory does not exist.")
+        raise typer.Exit(1)
+
+    if target is None:
+        if inplace:
+            target = source
+        else:
+            target = source.parent / f"{source.name}-packaged"
+    else:
+        target = target.resolve()
+
+    if not inplace and target.exists():
+        console.print(f"[red]Error:[/red] Target directory {target} already exists.")
+        raise typer.Exit(1)
+
+    console.print(f"[blue]Packaging:[/blue] {source}")
+    if not inplace:
+        console.print(f"[green]Output will be written to:[/green] {target}")
+
+    try:
+        has_requirements = pack_app(source, target, inplace=inplace)
+    except Exception as e:
+        console.print(f"[red]Failed:[/red] {e}")
+        raise typer.Exit(1)
+
+    console.print("[green]✔ Packaging complete.[/green]")
+    
+    # Check if we need to cd into the target directory
+    current_dir = Path.cwd()
+    need_cd = current_dir != target
+    
+    # Check for requirements.txt and provide installation instructions
+    project_name = source.name
+    package_name = project_name.replace("-", "_")
+    
+    if has_requirements:
+        relative_path = f"{package_name}/requirements.txt"
+        console.print("\n[blue]Found requirements.txt in the package.[/blue]")
+        console.print("To install dependencies, run:")
+        
+        if need_cd:
+            console.print(f"  [green]cd {target.name}[/green]")
+            console.print(f"  [green]uv add -r {relative_path}[/green]")
+        else:
+            console.print(f"  [green]uv add -r {relative_path}[/green]")
+            
+        console.print("\nAlternatively:")
+        if need_cd:
+            console.print(f"  [dim]cd {target.name} && pip install -r {relative_path}[/dim]")
+        else:
+            console.print(f"  [dim]pip install -r {relative_path}[/dim]")
+    else:
+        console.print("\n[dim]No requirements.txt found. You may need to manually install dependencies:[/dim]")
+        
+        if need_cd:
+            console.print(f"  [dim]cd {target.name}[/dim]")
+            console.print("  [dim]uv add shiny  # or other dependencies[/dim]")
+        else:
+            console.print("  [dim]uv add shiny  # or other dependencies[/dim]")
+    
+    # Show how to run the app after installation
+    console.print("\nTo run the app:")
+    console.print(f"  [green]uv run {project_name}[/green]")
+    console.print("\nAlternatively:")
+    console.print(f"  [dim]python -m {package_name}[/dim]")
