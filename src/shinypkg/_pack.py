@@ -98,8 +98,8 @@ def pack_app(source: Path, target: Path, inplace: bool = False):
                 continue
             if path.is_file() and _is_excluded(path.name):
                 continue
-            shutil.move(str(path), str(package_dir / path.name))
-            console.log(f"Moved: {package_dir / path.name}")
+            shutil.move(path, package_dir / path.name)
+            console.log(f"Moved: {path} -> {package_dir / path.name}")
 
         # context for templates
         git_info = get_git_author_info()
