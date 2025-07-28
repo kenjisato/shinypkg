@@ -36,7 +36,7 @@ jobs:
       - name: Generate changelog and create GitHub Release
         run: python scripts/changelog_from_dev_prs.py
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Commit updated CHANGELOG.md
         run: |
