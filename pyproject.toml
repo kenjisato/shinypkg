@@ -32,6 +32,6 @@ commit = true
 tag = true
 
 [[tool.bumpversion.files]]
-filename = '__about__.py'
+filename = 'src/shinypkg/__about__.py'
 
 
