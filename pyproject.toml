@@ -29,7 +29,7 @@ dev = [
 
 [tool.bumpversion]
 commit = true
-tag = true
+tag = false
 
 [[tool.bumpversion.files]]
 filename = 'src/shinypkg/__about__.py'
