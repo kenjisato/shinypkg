@@ -39,11 +39,38 @@ def get_pr_title(pr_number: str) -> str:
         print(f"⚠️ Failed to fetch PR #{pr_number}: {e}")
         return ""
 
-# dev..HEAD のマージコミットから PR タイトル収集
-log_output = subprocess.check_output(
-    ["git", "log", f"{BASE_BRANCH}..HEAD", "--merges", "--pretty=%s"],
-    text=True,
-).splitlines()
+# Get the previous tag to determine the range
+try:
+    # Get the previous tag
+    previous_tag = subprocess.check_output(
+        ["git", "describe", "--tags", "--abbrev=0", "HEAD^"],
+        text=True,
+    ).strip()
+    commit_range = f"{previous_tag}..HEAD"
+except subprocess.CalledProcessError:
+    # If no previous tag exists, use all commits
+    commit_range = "HEAD"
+
+# Get merge commits from the determined range
+try:
+    log_output = subprocess.check_output(
+        ["git", "log", commit_range, "--merges", "--pretty=%s"],
+        text=True,
+    ).splitlines()
+except subprocess.CalledProcessError:
+    # Fallback: if the range doesn't work, try to fetch dev branch and use it
+    try:
+        subprocess.run(["git", "fetch", "origin", "dev:dev"], check=True)
+        log_output = subprocess.check_output(
+            ["git", "log", f"{BASE_BRANCH}..HEAD", "--merges", "--pretty=%s"],
+            text=True,
+        ).splitlines()
+    except subprocess.CalledProcessError:
+        # Final fallback: use all merge commits
+        log_output = subprocess.check_output(
+            ["git", "log", "--merges", "--pretty=%s"],
+            text=True,
+        ).splitlines()
 
 pattern = re.compile(r"Merge pull request #(\d+)")
 pr_titles = []
@@ -96,14 +123,34 @@ for section, items in sections.items():
 entry = "\n".join(lines)
 
 # CHANGELOG.md に追記
-with open("CHANGELOG.md", "a", encoding="utf-8") as f:
-    f.write(entry + "\n")
+try:
+    with open("CHANGELOG.md", "a", encoding="utf-8") as f:
+        f.write(entry + "\n")
+except FileNotFoundError:
+    # Create CHANGELOG.md if it doesn't exist
+    with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+        f.write("# Changelog\n\n")
+        f.write(entry + "\n")
 
 # GitHub Release 作成
 tag = f"v{version}"
-subprocess.run([
-    "gh", "release", "create", tag,
-    "--title", f"Release {tag}",
-    "--notes", entry,
-    "--target", "main"
-], check=True)
+try:
+    subprocess.run([
+        "gh", "release", "create", tag,
+        "--title", f"Release {tag}",
+        "--notes", entry,
+        "--target", "main"
+    ], check=True)
+    print(f"✅ Created GitHub release {tag}")
+except subprocess.CalledProcessError as e:
+    # If release already exists, try to update it
+    try:
+        subprocess.run([
+            "gh", "release", "edit", tag,
+            "--title", f"Release {tag}",
+            "--notes", entry
+        ], check=True)
+        print(f"✅ Updated existing GitHub release {tag}")
+    except subprocess.CalledProcessError:
+        print(f"⚠️ Failed to create or update GitHub release {tag}: {e}")
+        # Don't fail the entire workflow if release creation fails
