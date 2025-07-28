@@ -19,7 +19,7 @@ Alternatively:
 #pipx install shinypkg
 ```
 
-## 🚀 Quickstart
+## 🚀 Create an App Project
 
 ```bash
 # Step 1: Create a new Shiny app project
@@ -36,10 +36,10 @@ uv run myapp
 
 # Optional: Install the app as a tool
 uv tool install -e .
-myapp run
+myapp
 ```
 
-## 🧰 What does it generate?
+### 🧰 What does it generate?
 
 After `shinypkg create myapp`, you will get:
 
@@ -61,6 +61,19 @@ myapp/
 - `pyproject.toml`: Declares your app as a package.
 - `.gitignore`: Standard Python and venv ignores.
 
+
+## 📦 Packaging an Existing Shiny App
+
+If you already have a directory with `app.py`, you can turn it into a Python package using:
+
+```bash
+shinypkg pack myapp
+```
+
+This will create a new project directory with the same structure as `shinypkg create`, wrapping your app in a minimal Python package layout. 
+
+
+
 ## ✨ Features
 
 - Minimal Shiny app starter
@@ -68,6 +81,7 @@ myapp/
 - CLI and Python module compatible
 - Auto-fills Git author info if available
 - Optionally initializes a Git repo
+- Turn an existing app into a package
 - Suitable for beginners and reproducible teaching setups
 
 ## 🧑‍🏫 For Teaching
