@@ -1,6 +1,6 @@
 [project]
 name = "shinypkg"
-version = "0.1.1"
+version = "0.2.0"
 description = "A small tool to help you distribute a Shiny app"
 readme = "README.md"
 license = { text = "MIT" }
@@ -20,3 +20,18 @@ shinypkg = "shinypkg.cli:app"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.0",
+]
+
+[tool.bumpversion]
+commit = true
+tag = false
+
+[[tool.bumpversion.files]]
+filename = 'src/shinypkg/__about__.py'
+
+
